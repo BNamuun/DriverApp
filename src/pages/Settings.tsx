@@ -28,14 +28,14 @@ export default function Settings() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
+    <div className="flex min-h-screen min-h-dvh flex-col bg-background">
       <Header 
         title="Settings" 
         showBack 
         onBack={() => navigate('/home')} 
       />
 
-      <div className="flex flex-1 flex-col gap-6 px-4 pb-6 pt-4">
+      <div className="flex flex-1 flex-col gap-6 px-4 pb-6 pt-4 safe-bottom">
         {/* Alert Settings */}
         <SettingsSection title="Alerts">
           <SettingsItem 
@@ -48,7 +48,7 @@ export default function Settings() {
               onValueChange={([val]) => updateSetting('alertVolume', val)}
               max={100}
               step={5}
-              className="w-32"
+              className="w-24 sm:w-32"
             />
           </SettingsItem>
 

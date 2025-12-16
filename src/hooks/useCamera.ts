@@ -42,9 +42,13 @@ export function useCamera(options: UseCameraOptions = {}): UseCameraReturn {
       
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
-        await videoRef.current.play();
+        try {
+          await videoRef.current.play();
+        } catch {
+          // Autoplay may be blocked; stream is still valid and can start after user interaction.
+        }
       }
-      
+
       setIsActive(true);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Failed to access camera";
@@ -87,13 +91,14 @@ export function useCamera(options: UseCameraOptions = {}): UseCameraReturn {
     if (autoStart) {
       startCamera();
     }
-    
+  }, [autoStart, startCamera]);
+
+  // Always stop camera on unmount
+  useEffect(() => {
     return () => {
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
-      }
+      stopCamera();
     };
-  }, [autoStart]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [stopCamera]);
 
   // Attach stream to video element when it changes
   useEffect(() => {

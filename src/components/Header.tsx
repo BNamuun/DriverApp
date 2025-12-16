@@ -33,7 +33,7 @@ export function Header({
             variant="ghost" 
             size="icon" 
             onClick={onBack}
-            className={dark ? 'text-drive-foreground hover:bg-drive-card' : ''}
+            className={cn('touch-target', dark ? 'text-drive-foreground hover:bg-drive-card' : '')}
           >
             <ArrowLeft className="h-6 w-6" />
           </Button>
@@ -50,7 +50,7 @@ export function Header({
             variant="ghost" 
             size="icon" 
             onClick={onSettings}
-            className={dark ? 'text-drive-foreground hover:bg-drive-card' : ''}
+            className={cn('touch-target', dark ? 'text-drive-foreground hover:bg-drive-card' : '')}
           >
             <Settings className="h-6 w-6" />
           </Button>

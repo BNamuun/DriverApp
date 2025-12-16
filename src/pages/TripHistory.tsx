@@ -11,14 +11,14 @@ export default function TripHistory() {
   const hasTrips = mockTrips.length > 0;
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
+    <div className="flex min-h-screen min-h-dvh flex-col bg-background">
       <Header 
         title="Trip History" 
         showBack 
         onBack={() => navigate('/home')} 
       />
 
-      <div className="flex flex-1 flex-col px-4 pb-6">
+      <div className="flex flex-1 flex-col px-4 pb-6 safe-bottom">
         {hasTrips ? (
           <div className="flex flex-col gap-3 pt-4">
             {mockTrips.map(trip => (

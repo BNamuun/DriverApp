@@ -14,7 +14,7 @@ export default function TripDetails() {
 
   if (!trip) {
     return (
-      <div className="flex min-h-screen flex-col bg-background">
+      <div className="flex min-h-screen min-h-dvh flex-col bg-background">
         <Header 
           title="Trip Details" 
           showBack 
@@ -45,14 +45,14 @@ export default function TripDetails() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
+    <div className="flex min-h-screen min-h-dvh flex-col bg-background">
       <Header 
         title="Trip Details" 
         showBack 
         onBack={() => navigate('/history')} 
       />
 
-      <div className="flex flex-1 flex-col px-4 pb-6">
+      <div className="flex flex-1 flex-col px-4 pb-6 safe-bottom">
         {/* Trip Summary */}
         <div className="mt-4 rounded-2xl bg-card p-4 shadow-sm">
           <p className="text-lg font-semibold text-foreground">
@@ -62,7 +62,7 @@ export default function TripDetails() {
             {format(trip.startTime, 'h:mm a')} - {trip.endTime ? format(trip.endTime, 'h:mm a') : 'Ongoing'}
           </p>
 
-          <div className="mt-4 grid grid-cols-3 gap-4">
+          <div className="mt-4 grid grid-cols-3 gap-2 sm:gap-4">
             <StatItem 
               icon={Clock} 
               label="Duration" 

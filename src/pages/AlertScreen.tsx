@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { MapPin, Volume2, Phone, Car, CheckCircle, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { NearbyRestAreasMap } from '@/components/NearbyRestAreasMap';
 
 export default function AlertScreen() {
   const navigate = useNavigate();
@@ -22,13 +23,13 @@ export default function AlertScreen() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-background safe-top safe-bottom">
+    <div className="flex min-h-screen min-h-dvh flex-col bg-background safe-top safe-bottom">
       {/* Alert Banner */}
-      <div className="flex flex-col items-center bg-alert-danger px-4 py-8 text-center">
+      <div className="flex flex-col items-center bg-alert-danger px-4 py-6 sm:py-8 text-center">
         <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary-foreground/20">
           <MapPin className="h-8 w-8 text-primary-foreground" />
         </div>
-        <h1 className="text-3xl font-bold text-primary-foreground">DROWSINESS DETECTED</h1>
+        <h1 className="text-2xl font-bold text-primary-foreground sm:text-3xl">DROWSINESS DETECTED</h1>
         <p className="mt-2 text-primary-foreground/80">Your alertness level has dropped significantly</p>
       </div>
 
@@ -75,16 +76,9 @@ export default function AlertScreen() {
           </div>
         </div>
 
-        {/* Map Placeholder */}
+        {/* Nearby Rest Areas Map */}
         <div className="flex-1 overflow-hidden rounded-2xl bg-muted">
-          <div className="relative h-full min-h-[150px]">
-            <div className="absolute inset-0 flex items-center justify-center bg-accent">
-              <div className="text-center text-muted-foreground">
-                <MapPin className="mx-auto mb-2 h-8 w-8" />
-                <p className="text-sm">Nearby rest areas</p>
-              </div>
-            </div>
-          </div>
+          <NearbyRestAreasMap radiusMeters={5000} />
         </div>
 
         {/* Dismiss */}

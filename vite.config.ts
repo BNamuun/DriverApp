@@ -1,14 +1,22 @@
-import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react-swc";
-import path from "path";
-import { componentTagger } from "lovable-tagger";
-import { VitePWA } from "vite-plugin-pwa";
+import { defineConfig } from "vite"
+import react from "@vitejs/plugin-react-swc"
+import path from "path"
+import { componentTagger } from "lovable-tagger"
+import { VitePWA } from "vite-plugin-pwa"
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
-    port: 8080,
+    // Prefer 8081, but don't hard-fail if something else is already running there.
+    port: Number(process.env.VITE_PORT ?? 8081),
+    proxy: {
+      // DriverApp -> backend-api (which proxies to the Python ml-service)
+      "/api": {
+        target: "http://localhost:3000",
+        changeOrigin: true,
+      },
+    },
   },
   plugins: [
     react(),
@@ -68,4 +76,4 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
-}));
+}))

@@ -52,9 +52,9 @@ export default function Install() {
 
   if (isInstalled) {
     return (
-      <div className="min-h-screen bg-background flex flex-col">
+      <div className="min-h-screen min-h-dvh bg-background flex flex-col">
         <Header title="Install App" />
-        <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
+        <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-6 text-center safe-bottom">
           <div className="w-20 h-20 rounded-full bg-success/20 flex items-center justify-center mb-6">
             <CheckCircle className="w-10 h-10 text-success" />
           </div>
@@ -71,9 +71,9 @@ export default function Install() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen min-h-dvh bg-background flex flex-col">
       <Header title="Install App" />
-      <div className="flex-1 flex flex-col p-6">
+      <div className="flex-1 flex flex-col p-4 sm:p-6 safe-bottom">
         <div className="flex-1 flex flex-col items-center justify-center text-center">
           <div className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center mb-6">
             <Smartphone className="w-10 h-10 text-primary" />
