@@ -30,12 +30,18 @@ type InferResponse = {
 
 function computeRisk(
   eyeClosedDuration: number,
-  signals: InferResponse["signals"]
+  signals: InferResponse["signals"],
+  consecutiveHeadNods: number,
+  headNodDetected: boolean
 ): { riskLevel: RiskLevel; confidence: number } {
   const secondaryRisk = Boolean(
     signals.yawn || signals.tired || signals.eye_closed || signals.asleep
   )
 
+  // Head nod detected = severe risk with confidence 30
+  if (headNodDetected) return { riskLevel: "severe", confidence: 30 }
+  // 3 consecutive head nods = severe risk with confidence 30
+  if (consecutiveHeadNods >= 3) return { riskLevel: "severe", confidence: 30 }
   if (eyeClosedDuration >= 2) return { riskLevel: "severe", confidence: 40 }
   if (eyeClosedDuration >= 1) return { riskLevel: "moderate", confidence: 60 }
   if (secondaryRisk) return { riskLevel: "mild", confidence: 75 }
@@ -67,62 +73,51 @@ export default function DriveMode() {
   const lastEyesClosedRef = useRef(false)
   const lastEyesClosedAtRef = useRef<number | null>(null)
   const blinkTimestampsRef = useRef<number[]>([])
+  const drowsyEyeWarningSoundPlayedRef = useRef(false)
 
   const lastYawnRef = useRef(false)
   const yawnTimestampsRef = useRef<number[]>([])
   const lastYawnSoundAtRef = useRef<number>(0)
-  const audioCtxRef = useRef<AudioContext | null>(null)
+  const yawnWarningAudioRef = useRef<HTMLAudioElement | null>(null)
 
   const severeSinceRef = useRef<number | null>(null)
+  
+  // Head nod detection: track consecutive detections
+  const lastHeadNodRef = useRef(false)
+  const consecutiveHeadNodsRef = useRef(0)
+  
+  // Asleep duration tracking
+  const asleepSinceRef = useRef<number | null>(null)
+  const alarmAudioRef = useRef<HTMLAudioElement | null>(null)
+  const alarmPlayedRef = useRef(false)
 
-  const playYawnWarningSound = useCallback(async () => {
-    try {
-      const AudioContextCtor =
-        window.AudioContext ||
-        (window as unknown as { webkitAudioContext?: typeof AudioContext })
-          .webkitAudioContext
+  const playYawnWarningSound = useCallback(() => {
+    if (yawnWarningAudioRef.current) {
+      yawnWarningAudioRef.current.currentTime = 0
+      yawnWarningAudioRef.current.play().catch(() => {
+        // Ignore autoplay policy errors
+      })
+    }
+  }, [])
 
-      if (!AudioContextCtor) return
-
-      if (!audioCtxRef.current) {
-        audioCtxRef.current = new AudioContextCtor()
+  // Initialize alarm audio
+  useEffect(() => {
+    alarmAudioRef.current = new Audio('/sounds/alarm.mp4')
+    alarmAudioRef.current.preload = 'auto'
+    alarmAudioRef.current.loop = true // Loop the alarm sound
+    
+    yawnWarningAudioRef.current = new Audio('/sounds/warning.mp4')
+    yawnWarningAudioRef.current.preload = 'auto'
+    
+    return () => {
+      if (alarmAudioRef.current) {
+        alarmAudioRef.current.pause()
+        alarmAudioRef.current = null
       }
-
-      const ctx = audioCtxRef.current
-      if (!ctx) return
-
-      // Some browsers require an explicit resume() after a user gesture.
-      if (ctx.state === "suspended") {
-        await ctx.resume()
+      if (yawnWarningAudioRef.current) {
+        yawnWarningAudioRef.current.pause()
+        yawnWarningAudioRef.current = null
       }
-
-      const t0 = ctx.currentTime
-      const beepCount = 3
-      const spacing = 0.28
-      const duration = 0.18
-
-      for (let i = 0; i < beepCount; i++) {
-        const osc = ctx.createOscillator()
-        const gain = ctx.createGain()
-
-        osc.type = "sine"
-        osc.frequency.setValueAtTime(880, t0 + i * spacing)
-
-        gain.gain.setValueAtTime(0.0001, t0 + i * spacing)
-        gain.gain.exponentialRampToValueAtTime(0.18, t0 + i * spacing + 0.01)
-        gain.gain.exponentialRampToValueAtTime(
-          0.0001,
-          t0 + i * spacing + duration
-        )
-
-        osc.connect(gain)
-        gain.connect(ctx.destination)
-
-        osc.start(t0 + i * spacing)
-        osc.stop(t0 + i * spacing + duration)
-      }
-    } catch {
-      // Ignore audio errors (autoplay policies, etc.)
     }
   }, [])
 
@@ -221,6 +216,45 @@ export default function DriveMode() {
         const yawnDetected = Boolean(signals.yawn)
         const headNodDetected = Boolean(signals.asleep)
 
+        // Head nod tracking: count consecutive detections
+        if (headNodDetected && !lastHeadNodRef.current) {
+          // Rising edge: new head nod detected
+          consecutiveHeadNodsRef.current += 1
+        } else if (!headNodDetected) {
+          // Reset counter when head nod stops
+          consecutiveHeadNodsRef.current = 0
+        }
+        lastHeadNodRef.current = headNodDetected
+        
+        // Asleep duration tracking: play alarm after 1.5 seconds, navigate only when head nod stops
+        if (headNodDetected) {
+          if (asleepSinceRef.current === null) {
+            asleepSinceRef.current = now
+            alarmPlayedRef.current = false
+          }
+          
+          const asleepDuration = (now - asleepSinceRef.current) / 1000
+          
+          if (asleepDuration >= 1.5 && !alarmPlayedRef.current && alarmAudioRef.current) {
+            alarmAudioRef.current.currentTime = 0
+            alarmAudioRef.current.play().catch(() => {
+              // Ignore autoplay policy errors
+            })
+            alarmPlayedRef.current = true
+          }
+        } else {
+          // When head nod stops, navigate to alert page if alarm was played
+          if (alarmPlayedRef.current) {
+            if (alarmAudioRef.current) {
+              alarmAudioRef.current.pause()
+              alarmAudioRef.current.currentTime = 0
+            }
+            navigate('/alert')
+          }
+          asleepSinceRef.current = null
+          alarmPlayedRef.current = false
+        }
+
         // Yawn window: count only rising edges (false -> true), keep last 60s
         const newYawn = !lastYawnRef.current && yawnDetected
         if (newYawn) {
@@ -243,15 +277,24 @@ export default function DriveMode() {
 
         // Eye-closed duration (seconds)
         if (eyesClosed) {
-          if (eyeClosedSinceRef.current === null)
+          if (eyeClosedSinceRef.current === null) {
             eyeClosedSinceRef.current = now
+            drowsyEyeWarningSoundPlayedRef.current = false
+          }
         } else {
           eyeClosedSinceRef.current = null
+          drowsyEyeWarningSoundPlayedRef.current = false
         }
         const eyeClosedDuration =
           eyesClosed && eyeClosedSinceRef.current !== null
             ? (now - eyeClosedSinceRef.current) / 1000
             : 0
+        
+        // Play warning sound if drowsy eye duration reaches 30 seconds
+        if (eyeClosedDuration >= 30 && !drowsyEyeWarningSoundPlayedRef.current) {
+          playYawnWarningSound()
+          drowsyEyeWarningSoundPlayedRef.current = true
+        }
 
         // Blink rate estimate (blinks per minute) using close->open transitions
         if (!lastEyesClosedRef.current && eyesClosed) {
@@ -274,11 +317,13 @@ export default function DriveMode() {
 
         const { riskLevel, confidence } = computeRisk(
           eyeClosedDuration,
-          signals
+          signals,
+          consecutiveHeadNodsRef.current,
+          headNodDetected
         )
 
-        // Navigate to alert if severe is sustained
-        if (riskLevel === "severe") {
+        // Navigate to alert if severe is sustained (but not for head nod - that has its own logic)
+        if (riskLevel === "severe" && !headNodDetected) {
           if (severeSinceRef.current === null) severeSinceRef.current = now
           if (
             severeSinceRef.current !== null &&
@@ -389,8 +434,8 @@ export default function DriveMode() {
             riskLevel={mlOutput.riskLevel}
           />
           <p className="mt-4 text-sm text-drive-muted">
-            Eyes: {mlOutput.eyeClosedDuration < 0.5 ? "Open" : "Closed"} • Blink
-            rate {mlOutput.blinkRate > 10 ? "normal" : "slow"}
+            Eyes: {mlOutput.eyeClosedDuration < 0.5 ? "Open" : "Closed"} • Drowsy:{" "}
+            {mlOutput.riskLevel === "severe" || mlOutput.riskLevel === "moderate" ? "Yes" : "No"}
           </p>
         </div>
 
