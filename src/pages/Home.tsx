@@ -7,6 +7,7 @@ import { StatusCard } from "@/components/StatusCard"
 import { DashboardTile } from "@/components/DashboardTile"
 import { mockTrips, mockCameraStatus } from "@/data/mockData"
 import { useToast } from "@/components/ui/use-toast"
+import { getApiUrl } from "@/lib/api"
 
 export default function Home() {
   const navigate = useNavigate()
@@ -21,7 +22,7 @@ export default function Home() {
   const handleStartDrive = async () => {
     setIsStarting(true)
     try {
-      const res = await fetch("/api/drive/health")
+      const res = await fetch(getApiUrl("api/drive/health"))
       if (!res.ok) throw new Error(`Backend unavailable (${res.status})`)
       console.log("respons:", res)
       const data = await res.json()

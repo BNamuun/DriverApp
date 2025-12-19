@@ -9,6 +9,7 @@ import { useCamera } from "@/hooks/useCamera"
 import { mockMLOutput } from "@/data/mockData"
 import { MLOutput, RiskLevel } from "@/types"
 import { useToast } from "@/components/ui/use-toast"
+import { getApiUrl } from "@/lib/api"
 
 type InferResponse = {
   detections: Array<{
@@ -135,7 +136,7 @@ export default function DriveMode() {
 
     ;(async () => {
       try {
-        const res = await fetch("/api/drive/health")
+        const res = await fetch(getApiUrl("api/drive/health"))
         if (!res.ok) throw new Error(`Backend unavailable (${res.status})`)
 
         const data = await res.json()
@@ -192,7 +193,7 @@ export default function DriveMode() {
 
       inFlightRef.current = true
       try {
-        const res = await fetch("/api/drive/infer", {
+        const res = await fetch(getApiUrl("api/drive/infer"), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
