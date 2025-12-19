@@ -13,7 +13,7 @@ export default defineConfig(({ mode }) => ({
     proxy: {
       // DriverApp -> backend-api (which proxies to the Python ml-service)
       "/api": {
-        target: "http://localhost:3000",
+        target: `http://localhost:${process.env.VITE_BACKEND_PORT ?? 3000}`,
         changeOrigin: true,
       },
     },
