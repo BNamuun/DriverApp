@@ -14,6 +14,7 @@ import TripDetails from "./pages/TripDetails";
 import Settings from "./pages/Settings";
 import Install from "./pages/Install";
 import NotFound from "./pages/NotFound";
+import Debug from "./pages/Debug";
 
 const queryClient = new QueryClient();
 
@@ -34,6 +35,7 @@ const App = () => (
           <Route path="/trip/:id" element={<TripDetails />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/install" element={<Install />} />
+          <Route path="/debug" element={<Debug />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
